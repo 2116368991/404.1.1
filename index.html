@@ -95,9 +95,9 @@
     <div class="foot">
       <!-- 保留原有逻辑：秘密链接直接跳转 -->
       <font><a href="./wa/index.html" target="_blank"><i></i>秘密</a></font>
-      <!-- 相册：添加密码验证（无拦截版） -->
+      <!-- 相册：添加密码验证 -->
       <font><a href="javascript:void(0)" class="protected-link" data-url="./xc/index.html"><i></i>相册</a></font>
-      <!-- 我们：添加密码验证（无拦截版） -->
+      <!-- 我们：添加密码验证 -->
       <font><a href="javascript:void(0)" class="protected-link" data-url="./jl/demo.html"><i></i>我们</a></font> 
       <!-- 保留原有逻辑：留言板链接直接跳转 -->
       <font><a href="https://mp.weixin.qq.com/s/aGsn7phRwan28380NNlBDg" target="_blank"><i></i>留言板</a></font>
@@ -135,7 +135,7 @@
       <source src="https://api.uomg.com/api/rand.music?sort=热歌榜" type="audio/mpeg">
     </audio>
 
-    <!-- 密码验证核心脚本（修复拦截问题） -->
+    <!-- 密码验证核心脚本 -->
     <script>
       // 1. 定义统一密码（可自行修改，比如改成你们的纪念日）
       const CORRECT_PASSWORD = "1314";
@@ -143,33 +143,26 @@
       // 2. 获取需要密码验证的链接（相册、我们）
       const protectedLinks = document.querySelectorAll('.protected-link');
 
-      // 3. 给每个受保护链接绑定点击事件（无拦截逻辑）
+      // 3. 给每个受保护链接绑定点击事件
       protectedLinks.forEach(link => {
         link.addEventListener('click', function() {
-          // 第一步：点击瞬间先打开空白新窗口（浏览器判定为用户主动操作，不拦截）
-          const newWindow = window.open('', '_blank');
-          // 给空白窗口加个加载提示（提升体验）
-          newWindow.document.write('<div style="text-align:center;margin-top:50px;font-size:20px;color:#4f0088;">💖 正在验证密码...</div>');
-          
-          // 第二步：弹出密码输入框
+          // 弹出密码输入框
           const userInput = prompt("💖 请输入解锁密码，查看专属回忆～");
           
-          // 第三步：密码验证逻辑
+          // 密码验证逻辑
           if (userInput === CORRECT_PASSWORD) {
             alert("密码正确✨ 正在为你打开专属回忆～");
-            // 验证通过：给空白窗口赋值跳转地址（无延迟/延迟都不会被拦截）
+            // 获取跳转地址并跳转（延迟1秒增加体验感）
             const targetUrl = this.getAttribute('data-url');
             setTimeout(() => {
-              newWindow.location.href = targetUrl;
+              window.open(targetUrl, "_blank"); // 保持原有的新窗口打开逻辑
             }, 1000);
           } else if (userInput === null) {
-            // 用户点击取消：关闭空白窗口
+            // 用户点击取消
             alert("你取消了输入，暂时无法查看哦～");
-            newWindow.close();
           } else {
-            // 密码错误：关闭空白窗口
+            // 密码错误
             alert("密码不对哦😜 再想想我们的专属密码～");
-            newWindow.close();
           }
         });
       });
