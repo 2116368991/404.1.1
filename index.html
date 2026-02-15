@@ -12,6 +12,73 @@
   <link rel="stylesheet" href="css/style.css">
   <script src="js/jquery.min.js" defer=""></script>
   <script src="js/index.js" defer=""></script>
+  <style>
+    /* 自定义密码弹窗样式（核心：避免键盘拦截） */
+    .password-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.8);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999; /* 最高层级，确保不被遮挡 */
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s ease;
+    }
+    .password-modal.show {
+      opacity: 1;
+      visibility: visible;
+    }
+    .modal-content {
+      background: #4f0088;
+      padding: 30px;
+      border-radius: 15px;
+      text-align: center;
+      width: 80%;
+      max-width: 400px;
+      color: #fff;
+    }
+    .modal-title {
+      font-size: 20px;
+      margin-bottom: 20px;
+      font-weight: bold;
+    }
+    .password-input {
+      width: 80%;
+      padding: 12px 15px;
+      border-radius: 8px;
+      border: none;
+      font-size: 18px;
+      margin-bottom: 20px;
+      text-align: center;
+      outline: none;
+    }
+    .modal-buttons {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .modal-btn {
+      padding: 10px 20px;
+      border-radius: 8px;
+      border: none;
+      font-size: 16px;
+      cursor: pointer;
+      flex: 1;
+    }
+    .confirm-btn {
+      background: #ff69b4;
+      color: #fff;
+    }
+    .cancel-btn {
+      background: #ccc;
+      color: #333;
+    }
+  </style>
 </head>
 
 <body>
@@ -21,19 +88,31 @@
     </div>
     <div id="hitokoto">
       <script>
+        // 补全hitokoto函数避免报错
+        function hitokoto() {
+          document.getElementById('hitokoto').innerText = "斯人若彩虹，遇上方知有～";
+        }
         hitokoto()
       </script>
     </div>
     <div class="custom">
       <div class="box">
         <font><span id="runtime_span"></span>
-          <script type="text/javascript">function show_runtime() {
-              window.setTimeout("show_runtime()", 1000); X = new
-                Date("@11/1/2025 12:22:00");
-              Y = new Date(); T = (Y.getTime() - X.getTime()); M = 24 * 60 * 60 * 1000;
-              a = T / M; A = Math.floor(a); b = (a - A) * 24; B = Math.floor(b); c = (b - B) * 60; C = Math.floor((b - B) * 60); D = Math.floor((c - C) * 60);
+          <script type="text/javascript">
+            function show_runtime() {
+              window.setTimeout("show_runtime()", 1000); 
+              X = new Date("11/1/2025 12:22:00"); // 修复日期解析
+              Y = new Date(); 
+              T = (Y.getTime() - X.getTime()); 
+              M = 24 * 60 * 60 * 1000;
+              a = T / M; A = Math.floor(a); 
+              b = (a - A) * 24; B = Math.floor(b); 
+              c = (b - B) * 60; C = Math.floor((b - B) * 60); 
+              D = Math.floor((c - C) * 60);
               runtime_span.innerHTML = "我们已经相爱了: " + A + "天" + B + "小时" + C + "分" + D + "秒"
-            } show_runtime();</script>
+            } 
+            show_runtime();
+          </script>
           <span id="span_dt"></span>
         </font>
       </div>
@@ -80,11 +159,12 @@
       </div>
     </div>
     <div class="foot">
+      <!-- 保留秘密链接直接跳转 -->
       <font><a href="./wa/index.html" target="_blank"><i></i>秘密</a></font>
-      <font><a href="./xc/index.html" target="_blank"><i></i>相册</a></font>
-      <font><a href="./jl/demo.html" target="_blank"><i></i>我们</a></font> 
-
-      <!-- <font><a href="https://2116368991.github.io/quanauqn/" target="_blank"><i></i>关于我们</a></font> -->
+      <!-- 相册/我们：绑定自定义点击事件 -->
+      <font><a href="javascript:void(0)" class="protected-link" data-url="./xc/index.html"><i></i>相册</a></font>
+      <font><a href="javascript:void(0)" class="protected-link" data-url="./jl/demo.html"><i></i>我们</a></font> 
+      <!-- 保留留言板直接跳转 -->
       <font><a href="https://mp.weixin.qq.com/s/aGsn7phRwan28380NNlBDg" target="_blank"><i></i>留言板</a></font>
     </div>
     <div class="main">
@@ -114,12 +194,90 @@
     </div>
 
     <div class="footer">
-
       <a href="https://2116368991.github.io/quanquan/"><br><b>Copyright © 2026 By 爱你的权权</b><br> </a>
     </div>
     <audio autoplay>
       <source src="https://api.uomg.com/api/rand.music?sort=热歌榜" type="audio/mpeg">
     </audio>
+
+    <!-- 自定义密码弹窗（核心：替代prompt，解决键盘拦截） -->
+    <div class="password-modal" id="passwordModal">
+      <div class="modal-content">
+        <div class="modal-title">💖 请输入专属解锁密码</div>
+        <input type="password" class="password-input" id="passwordInput" placeholder="输入密码后点击确认">
+        <div class="modal-buttons">
+          <button class="modal-btn confirm-btn" id="confirmBtn">确认</button>
+          <button class="modal-btn cancel-btn" id="cancelBtn">取消</button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // 1. 全局变量定义
+      const CORRECT_PASSWORD = "1314"; // 自定义密码
+      let targetUrl = ""; // 要跳转的目标地址
+      let newWindow = null; // 预打开的空白窗口
+
+      // 2. 获取元素
+      const passwordModal = document.getElementById('passwordModal');
+      const passwordInput = document.getElementById('passwordInput');
+      const confirmBtn = document.getElementById('confirmBtn');
+      const cancelBtn = document.getElementById('cancelBtn');
+      const protectedLinks = document.querySelectorAll('.protected-link');
+
+      // 3. 绑定链接点击事件（无拦截+无键盘冲突）
+      protectedLinks.forEach(link => {
+        link.addEventListener('click', function() {
+          // 步骤1：保存目标地址
+          targetUrl = this.getAttribute('data-url');
+          
+          // 步骤2：点击瞬间打开空白窗口（避免跳转被拦截）
+          newWindow = window.open('', '_blank');
+          newWindow.document.write('<div style="text-align:center;margin-top:50px;font-size:20px;color:#4f0088;">💖 正在验证密码...</div>');
+          
+          // 步骤3：显示自定义密码弹窗（无键盘拦截）
+          passwordModal.classList.add('show');
+          passwordInput.focus(); // 自动聚焦输入框，键盘直接弹出
+        });
+      });
+
+      // 4. 确认密码按钮事件
+      confirmBtn.addEventListener('click', function() {
+        const userInput = passwordInput.value.trim();
+        
+        if (userInput === CORRECT_PASSWORD) {
+          alert("密码正确✨ 正在为你打开专属回忆～");
+          // 验证通过：跳转预打开的空白窗口
+          setTimeout(() => {
+            newWindow.location.href = targetUrl;
+          }, 1000);
+        } else {
+          alert("密码不对哦😜 再想想我们的专属密码～");
+          // 密码错误：关闭空白窗口
+          newWindow.close();
+        }
+        
+        // 关闭弹窗+清空输入
+        passwordModal.classList.remove('show');
+        passwordInput.value = "";
+      });
+
+      // 5. 取消按钮事件
+      cancelBtn.addEventListener('click', function() {
+        alert("你取消了输入，暂时无法查看哦～");
+        // 取消：关闭空白窗口+弹窗
+        newWindow.close();
+        passwordModal.classList.remove('show');
+        passwordInput.value = "";
+      });
+
+      // 6. 支持回车确认密码（优化体验）
+      passwordInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+          confirmBtn.click();
+        }
+      });
+    </script>
 </body>
 
 </html>
